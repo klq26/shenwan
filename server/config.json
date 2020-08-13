@@ -1,5 +1,9 @@
 {
-    "start_date": "2008-01-18",
-    "all_securities_count": 4028,
-    "local_industry_db_date": "2020-08-11"
+    "start_date": "2020-08-12",
+    "all_securities_count": 4033,
+    "local_industry_db_date": "2020-08-11",
+    "history": {
+        "top_dates": ["2007-05-28", "2010-04-14", "2015-06-08"],
+        "bottom_dates": ["2008-11-04", "2012-12-04", "2018-11-01"]
+    }
 }
