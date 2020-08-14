@@ -25,7 +25,22 @@ def sw_index_value():
         return Response(data, status=200, mimetype='application/json')
     # 请求
     sw = swindex()
-    results = sw.get_sw_index_value()
+    results = sw.get_sw_index_current_value()
+    end_ts = dm.getTimeStamp()
+    duration = dm.getDuration(start_ts, end_ts)
+    data = packDataWithCommonInfo(duration = duration, data = results)
+    cm.saveCache(request.path, data)
+    return Response(data, status=200, mimetype='application/json')
+
+@app.route('/shenwan/api/index_eval', methods=['GET'])
+def sw_index_eval():
+    start_ts = dm.getTimeStamp()
+    if cm.cacheAvailable(start_ts, request.path):
+        data = cm.getCache(start_ts, request.path)
+        return Response(data, status=200, mimetype='application/json')
+    # 请求
+    sw = swindex()
+    results = sw.get_sw_index_eval()
     end_ts = dm.getTimeStamp()
     duration = dm.getDuration(start_ts, end_ts)
     data = packDataWithCommonInfo(duration = duration, data = results)

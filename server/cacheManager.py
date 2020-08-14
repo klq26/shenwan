@@ -15,6 +15,8 @@ class cacheManager:
         self.cachConfig = [
             # 申万点数，缓存 30 秒
             {'path' : '/shenwan/api/index_value', 'cache_duration' : 60},
+            # 申万估值，缓存 6 小时
+            {'path' : '/shenwan/api/eval_value', 'cache_duration' : 6 * 60 * 60},
         ]
         self.cache_folder = os.path.join(os.getcwd(),'cache')
         if not os.path.exists(self.cache_folder):

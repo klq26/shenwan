@@ -5,9 +5,12 @@ import sys
 import json
 import time
 from datetime import datetime
+from datetime import timedelta
 
 import grequests
 import pandas as pd
+
+from server.configManager import configManager
 
 class swindex:
     """
@@ -15,39 +18,106 @@ class swindex:
     """
     def __init__(self):
         self.folder = os.path.abspath(os.path.dirname(__file__))
-        self.eval_folder = os.path.join(self.folder, u'申万行业估值')
-        self.all_market_eval_name = u'全市场整体'
+        self.cm = configManager()
         pass
 
-    def get_sw_index_eval(self, name, csv_path):
+    def get_sw_index_eval(self):
         """
         获取申万 28 行业，以及申万全 A 的指数估值
         """
-        # 读取全市场数据
-        df = pd.read_csv(csv_path, sep='\t', index_col=0)
-        pe = df.iloc[-1].pe
-        pe_percentile = round(len(df[df['pe'] <= df.iloc[-1].pe]) / len(df) * 100, 2)
+        # 最新一日
+        self.lastest_eval_df = pd.read_csv(os.path.join(self.folder, 'sw_latest_eval.csv'),sep='\t',index_col=0)
+        # 历史永续数据库
+        all_eval_df = pd.read_csv(os.path.join(self.folder, 'sw_history_daily_eval.csv'),sep='\t',index_col=0)
+        #     "history": {
+        #     "top_dates": ["2007-05-28", "2010-04-14", "2015-06-08"],
+        #     "bottom_dates": ["2008-11-04", "2012-12-04", "2018-11-01"]
+        # }
+        ultimate_values = {'to_tops': [], 'to_bottoms': []}
+        lastest_pe = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].pe.values[0]
+        lastest_pb = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].pb.values[0]
+        # print(lastest_pe, lastest_pb)
+        # 大顶
+        top_dates = self.cm.config['history']['top_dates']
+        tops_df = all_eval_df[(all_eval_df.date.isin(top_dates)) & (all_eval_df.sw1_code == 801003)]
+        for x in tops_df.itertuples():
+            # print(x.pe, x.pb)
+            distance = {}
+            distance['date'] = x.date
+            distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
+            distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
+            ultimate_values['to_tops'].append(distance)
+        # 大底
+        bottom_dates = self.cm.config['history']['bottom_dates']
+        bottom_df = all_eval_df[(all_eval_df.date.isin(bottom_dates)) & (all_eval_df.sw1_code == 801003)]
+        for x in bottom_df.itertuples():
+            # print(x.pe, x.pb)
+            distance = {}
+            distance['date'] = x.date
+            distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
+            distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
+            ultimate_values['to_bottoms'].append(distance)
+        # print(ultimate_values)
 
-        pb = df.iloc[-1].pb
-        count = 0
-        if 'total_count' in list(df.iloc[-1].index):
-            count = df.iloc[-1].total_count
-        pb_percentile = round(len(df[df['pb'] <= df.iloc[-1].pb]) / len(df) * 100, 2)
-        return {'name': name,'count':count, 'pe': pe, 'pe_percentile':str(pe_percentile) + '%', 'pb':pb, 'pb_percentile': str(pb_percentile) + '%'}
+        # 以 tuples 模式迭代
+        datalist = []
+        for eval in self.lastest_eval_df.itertuples():
+            item = dict()
+            item['sw1_code'] = eval.sw1_code
+            item['sw1_name'] = eval.sw1_name
+            item['date'] = eval.date
+            item['total_count'] = eval.total_count
+            item['pe'] = eval.pe
+            item['pe_negative_count'] = eval.pe_negative_count
+            item['pe_over_125_count'] = eval.pe_over_125_count
+            item['pb'] = eval.pb
+            # 按行业取出全部数据
+            industry_all_eval_df = all_eval_df[all_eval_df.sw1_code == eval.sw1_code]
+            df = industry_all_eval_df
+            # 永续 pe & pb 估值百分位
+            pe_percentile = round(len(df[df['pe'] <= eval.pe]) / len(df) * 100, 2)
+            item['pe_percentile'] = str(pe_percentile) + '%'
+            pb_percentile = round(len(df[df['pb'] <= eval.pb]) / len(df) * 100, 2)
+            item['pb_percentile'] = str(pb_percentile) + '%'
+            # 最近 3 年 pe & pb 估值百分位
+            end_date = datetime.strptime(eval.date, '%Y-%m-%d')
+            y3_start_date = end_date - timedelta(days=365 * 3)
+            y3_df = df[df.date >= y3_start_date.strftime('%Y-%m-%d')].copy()
+            pe_percentile_3y = round(len(y3_df[y3_df['pe'] <= eval.pe]) / len(y3_df) * 100, 2)
+            item['pe_percentile_3y'] = str(pe_percentile_3y) + '%'
+            pb_percentile_3y = round(len(y3_df[y3_df['pb'] <= eval.pb]) / len(y3_df) * 100, 2)
+            item['pb_percentile_3y'] = str(pb_percentile_3y) + '%'
+            # 最近 5 年 pe & pb 估值百分位
+            y5_start_date = end_date - timedelta(days=365 * 5)
+            y5_df = df[df.date >= y5_start_date.strftime('%Y-%m-%d')].copy()
+            pe_percentile_5y = round(len(y5_df[y5_df['pe'] <= eval.pe]) / len(y5_df) * 100, 2)
+            item['pe_percentile_5y'] = str(pe_percentile_5y) + '%'
+            pb_percentile_5y = round(len(y5_df[y5_df['pb'] <= eval.pb]) / len(y5_df) * 100, 2)
+            item['pb_percentile_5y'] = str(pb_percentile_5y) + '%'
+            # 最近 10 年 pe & pb 估值百分位
+            y10_start_date = end_date - timedelta(days=365 * 10)
+            y10_df = df[df.date >= y10_start_date.strftime('%Y-%m-%d')].copy()
+            pe_percentile_10y = round(len(y10_df[y10_df['pe'] <= eval.pe]) / len(y10_df) * 100, 2)
+            item['pe_percentile_10y'] = str(pe_percentile_10y) + '%'
+            pb_percentile_10y = round(len(y10_df[y10_df['pb'] <= eval.pb]) / len(y10_df) * 100, 2)
+            item['pb_percentile_10y'] = str(pb_percentile_10y) + '%'
+            datalist.append(item)
+        # [print(x) for x in datalist]
+        return {'ultimate': ultimate_values, 'eval': datalist}
 
-    def get_sw_index_value(self):
+    def get_sw_index_current_value(self):
         """
-        获取申万 28 行业，以及申万全 A 的指数点位
+        获取申万 28 行业，以及申万全 A 的指数的实时数据
         """
         # 参考文献 https://www.aibbt.com/a/22051.html
         url = 'http://www.swsindex.com/handler.aspx'
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
         # 申万全 A 以及申万 28 行业（前 19 个，到建筑装饰）共计 20个
-        param1 = self.sw_index_form_data('swzs','L1',1,"L1 in('801003', '801002', '801010', '801020', '801030', '801040', '801050', '801080', '801110','801120','801130','801140','801150','801160', '801170', '801180', '801200', '801210', '801230', '801710')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
+        param1 = self.__sw_index_form_data('swzs','L1',1,"L1 in('801003', '801002', '801010', '801020', '801030', '801040', '801050', '801080', '801110','801120','801130','801140','801150','801160', '801170', '801180', '801200', '801210', '801230', '801710')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
         # 申万 28 行业（从电气设备到机械设备）
-        param2 = self.sw_index_form_data('swzs','L1',1,"L1 in('801720', '801730', '801740', '801750', '801760', '801770', '801780', '801790', '801880', '801890')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
+        param2 = self.__sw_index_form_data('swzs','L1',1,"L1 in('801720', '801730', '801740', '801750', '801760', '801770', '801780', '801790', '801880', '801890')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
         # 申万风格指数（大盘、中盘、小盘）
-        param3 = self.sw_index_form_data('swzs','L1',1,"L1 in('801811','801812','801813','801821','801822','801823','801831','801832','801833','801841','801842','801843','801851','801852','801853','801861','801862','801863')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
+        param3 = self.__sw_index_form_data('swzs','L1',1,"L1 in('801811','801812','801813','801821','801822','801823','801831','801832','801833','801841','801842','801843','801851','801852','801853','801861','801862','801863')",'','L1,L2,L3,L4,L5,L6,L7,L8,L11','20')
         
         params = [param1, param2, param3]
         # 并发请求
@@ -90,7 +160,7 @@ class swindex:
                         sw_indexs.append(index)
         return {'sw_indexs': sw_indexs, 'sw_styles': sw_styles}
 
-    def sw_index_form_data(self, tablename, key, p, where, ordeby, fieldlist, pagecount, timed=None):
+    def __sw_index_form_data(self, tablename, key, p, where, ordeby, fieldlist, pagecount, timed=None):
         """
         组织 www.swindex.com 网站 aspx 服务的 post 参数
         """
@@ -99,14 +169,7 @@ class swindex:
 
 if __name__ == "__main__":
     sw = swindex()
-    datalist = sw.get_sw_index_value()
-    print(datalist)
-    # results = []
-    # for root, dirs, files in os.walk(sw.eval_folder):
-    #     for f in files:
-    #         # print(os.path.join(root, f))
-    #         results.append(sw.get_sw_index_eval(name = f.replace('.csv',''), csv_path = os.path.join(root, f)))
-    # [print('{0}\t{1}\t{2}\t{3}'.format(x['name'],x['count'], x['pe_percentile'], x['pb_percentile'])) for x in results]
+    sw.get_sw_index_eval()
     #FF6666
     #FF9966
     #FFCC66
