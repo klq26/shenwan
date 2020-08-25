@@ -167,9 +167,39 @@ class swindex:
         values = {'tablename':tablename, 'key':key, 'p':p, 'where':where, 'orderby':ordeby, 'fieldlist':fieldlist, 'pagecount':pagecount, 'timed':time.time()}
         return values
 
+    def get_index_weight(self):
+        df = pd.read_csv(os.path.join(self.folder, 'index_weights/all_index_sw_weights.csv'), sep='\t', index_col=[0,1], header=[0,1])
+        # 索引
+        names = df.index.levels[1]
+        indexs = df.index.codes[1]
+        # sw1_code
+        sw_codes = df.index.levels[0].tolist()
+        # sw1_name
+        sw_names = []
+        # sw1_sequence
+        sw_sequences = df.index.codes[0].tolist()
+        for i in indexs:
+            sw_names.append(names[i])
+        # sw1_indexs for DataFrame
+        # sw_indexs = list(zip(sw_sequences, sw_codes, sw_names))
+        sw_indexs = [{'sequence': x, 'sw1_code': y, 'sw1_name': z} for x, y, z in zip(sw_sequences, sw_codes, sw_names)]
+        # print(sw_names, type(sw_names))
+        # print(sw_codes, type(sw_codes))
+        print(sw_indexs, type(sw_indexs))
+
+        datalist = []
+        for x in df.columns:
+            index_code = x[0]
+            index_name = x[1]
+            values = df[index_code, index_name].values.tolist()
+            values = [round(x, 3) for x in values]
+            datalist.append({'code':index_code.split('.')[0], 'name': index_name, 'weight':values})
+            # break
+        return {'sw_industry':sw_indexs, 'datalist': datalist}
+
 if __name__ == "__main__":
     sw = swindex()
-    sw.get_sw_index_eval()
+    sw.get_index_weight()
     #FF6666
     #FF9966
     #FFCC66

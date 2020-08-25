@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import os
 import sys
 import time
@@ -47,7 +48,7 @@ class swindex_eval:
         # 最新的股票池（online）
         self.latest_all_securities_df = self.get_all_stocks(start_date = self.end_date)
         # 充行业分类（local）
-        self.local_industry_database_df = pd.read_csv('最新申万行业分类.csv', sep='\t', index_col=0)
+        self.local_industry_database_df = pd.read_csv(os.path.join(self.folder, u'sw_industry_categorys.csv'), sep='\t',encoding=u'utf-8', index_col=0)
         pass
 
     def get_industry_for_stocks(self, df):
@@ -57,7 +58,7 @@ class swindex_eval:
         申万在2014年2月21日做了调整，2014年2月21日有几个行业一分为二，几个行业二拆成三，还有几个改了名字
         2014年2月21日之后的行业是28个，之前是23个，历史上总共有34个。
         """
-        # return pd.read_csv('最新申万行业分类.csv', sep='\t', index_col=0)
+        # return pd.read_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t', index_col=0)
         results = get_industry(security = list(df.index))
         # {'000001.XSHE': {'jq_l1': {'industry_code': 'HY007', 'industry_name': '金融指数'},
         #                  'jq_l2': {'industry_code': 'HY493', 'industry_name': '多元化银行指数'},
@@ -89,7 +90,7 @@ class swindex_eval:
         # # failed_df = df[df['sw1_code'] == '获取失败']
         # # 写本地（注意这个 sort 要到给完 pe 估值才好搞，要不然 pe 返回数据是无法按 industry 升序排列的）
         df = df.sort_values(by=['sw1_code','sw2_code','sw3_code'])
-        # df.to_csv('最新申万行业分类.csv', sep='\t')
+        # df.to_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t')
         return df
 
     def get_all_stocks(self, start_date):
@@ -198,7 +199,7 @@ class swindex_eval:
             print('新入库行业分类数据：\n\n{0}'.format(diff_industry_df))
             self.local_industry_database_df = self.local_industry_database_df.append(diff_industry_df)
             self.local_industry_database_df = self.local_industry_database_df.sort_values(by=['sw1_code','sw2_code','sw3_code'])
-            self.local_industry_database_df.to_csv('最新申万行业分类.csv', sep='\t')
+            self.local_industry_database_df.to_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t')
         
         ###
         # 2. 拿出之前计算的数据，更新 start_date
@@ -238,11 +239,11 @@ class swindex_eval:
                 day_count += 1
                 if day_count == day_to_write_interval:
                     print('写入磁盘')
-                    results_df.to_csv('sw_history_daily_eval.csv',sep='\t')
+                    results_df.to_csv(os.path.join(self.folder, 'sw_history_daily_eval.csv'),sep='\t')
                     day_count = 0
                 # break
             print('写入磁盘')
-            results_df.to_csv('sw_history_daily_eval.csv',sep='\t')
+            results_df.to_csv(os.path.join(self.folder, 'sw_history_daily_eval.csv'),sep='\t')
             # 存入阿里云服务器数据库
             swindex_db().swindex_df_to_db(results_df, 'daily_eval')
         
@@ -250,9 +251,9 @@ class swindex_eval:
         # 4. 更新最新一日的等权估值情况，以便接口访问
         ###
         
-        latest_eval_df = results_df[results_df['date'] == self.end_date.strftime('%Y-%m-%d')]
+        latest_eval_df = results_df[-29:]
         latest_eval_df = latest_eval_df.reset_index(drop=True)
-        latest_eval_df.to_csv('sw_latest_eval.csv',sep='\t')
+        latest_eval_df.to_csv(os.path.join(self.folder, 'sw_latest_eval.csv'),sep='\t')
         # print(latest_eval_df)
 
 if __name__ == "__main__":

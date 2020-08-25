@@ -9,8 +9,8 @@ import pandas as pd
 
 from jqdatasdk import *
 
-from account import account
-from swindex_db import swindex_db
+from server.account import account
+from server.swindex_db import swindex_db
 
 pd.set_option('display.max_columns',30)
 pd.set_option('display.width',180)
@@ -40,7 +40,7 @@ class swindex_value:
         end_date = datetime.today().replace(hour=0, minute=0, second=0,microsecond=0)
 
         if os.path.exists(file_path):
-            results_df = pd.read_csv(file_path, sep='\t', index_col=0)
+            results_df = pd.read_csv(file_path, sep='\t', index_col=0, parse_dates=True)
             if len(results_df) > 0:
                 # 更新起始日期
                 last_date = results_df.tail(1).date.values[0]
@@ -70,18 +70,22 @@ class swindex_value:
                     )
                 df = finance.run_query(q)
                 df = df.drop(['id'], axis=1)
-                # print(df)
-                results_df = results_df.append(df, ignore_index=True)
-                results_df.to_csv('sw_history_daily_price.csv',sep='\t')
+                # code 统一成数字类型，date 改成字符串，便于和库内数据排序
+                df.code = df.code.astype('int64')
+                dates= df['date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+                df['date'] = dates
+                results_df = pd.concat([results_df, df], ignore_index=True)
+                # results_df.to_csv(file_path,sep='\t')
                 # break
         # 排序（先日期，再行业代码）
         results_df = results_df.sort_values(['date','code'])
+
         # 改名（电子元器件 => 电子，餐饮旅游 => 休闲服务）
         values= results_df['name'].apply(lambda x: x.replace('电子元器件','电子').replace('餐饮旅游', '休闲服务'))
         results_df['name'] = values
         results_df = results_df.reset_index()
         # 存入本地文件
-        results_df.to_csv('sw_history_daily_price.csv',sep='\t',index=0)
+        results_df.to_csv(file_path,sep='\t',index=0)
         # print(results_df)
         # 存入阿里云服务器数据库
         swindex_db().swindex_df_to_db(results_df, 'daily_price')
