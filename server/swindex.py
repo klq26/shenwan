@@ -33,10 +33,12 @@ class swindex:
         #     "top_dates": ["2007-05-28", "2010-04-14", "2015-06-08"],
         #     "bottom_dates": ["2008-11-04", "2012-12-04", "2018-11-01"]
         # }
-        ultimate_values = {'to_tops': [], 'to_bottoms': []}
+        ultimate_values = {'to_tops': [], 'to_bottoms': [], 'to_recents': []}
+        lastest_date = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].date.values[0]
+        lastest_date = datetime.strptime(lastest_date, '%Y-%m-%d')
         lastest_pe = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].pe.values[0]
         lastest_pb = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].pb.values[0]
-        # print(lastest_pe, lastest_pb)
+        # print(lastest_date, lastest_pe, lastest_pb)
         # 大顶
         top_dates = self.cm.config['history']['top_dates']
         tops_df = all_eval_df[(all_eval_df.date.isin(top_dates)) & (all_eval_df.sw1_code == 801003)]
@@ -44,6 +46,8 @@ class swindex:
             # print(x.pe, x.pb)
             distance = {}
             distance['date'] = x.date
+            distance['pe'] = x.pe
+            distance['pb'] = x.pb
             distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
             distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
             ultimate_values['to_tops'].append(distance)
@@ -54,11 +58,31 @@ class swindex:
             # print(x.pe, x.pb)
             distance = {}
             distance['date'] = x.date
+            distance['pe'] = x.pe
+            distance['pb'] = x.pb
             distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
             distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
             ultimate_values['to_bottoms'].append(distance)
+        # 最近 3个月、半年、1年
+        all_market_df = all_eval_df[all_eval_df.sw1_code == 801003]
+        quarter_before_date = lastest_date - timedelta(days=30 * 3)
+        half_year_before_date = lastest_date - timedelta(days=30 * 6)
+        year_before_date = lastest_date - timedelta(days=365)
+        item1 = all_market_df[all_market_df.date >= year_before_date.strftime('%Y-%m-%d')].copy().head(1)
+        item2 = all_market_df[all_market_df.date >= half_year_before_date.strftime('%Y-%m-%d')].copy().head(1)
+        item3 = all_market_df[all_market_df.date >= quarter_before_date.strftime('%Y-%m-%d')].copy().head(1)
+        recents_dates = [item1, item2, item3]
+        recents_df = pd.concat(recents_dates)
+        for x in recents_df.itertuples():
+            # print(x.pe, x.pb)
+            distance = {}
+            distance['date'] = x.date
+            distance['pe'] = x.pe
+            distance['pb'] = x.pb
+            distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
+            distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
+            ultimate_values['to_recents'].append(distance)
         # print(ultimate_values)
-
         # 以 tuples 模式迭代
         datalist = []
         for eval in self.lastest_eval_df.itertuples():
@@ -199,7 +223,8 @@ class swindex:
 
 if __name__ == "__main__":
     sw = swindex()
-    sw.get_index_weight()
+    sw.get_sw_index_eval()
+    # sw.get_index_eval()
     #FF6666
     #FF9966
     #FFCC66

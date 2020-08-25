@@ -8,7 +8,7 @@ import pandas as pd
 from jqdatasdk import *
 
 # from server.account import account
-from account import account
+from server.account import account
 
 pd.set_option('display.max_columns',30)
 pd.set_option('display.width',180)

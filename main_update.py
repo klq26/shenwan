@@ -25,4 +25,9 @@ if __name__ == "__main__":
     # 更新指数行业权重
     weight = index_weight()
     weight.update_index_weights()
+    # 更新完毕后，清除缓存文件（有些接口缓存长达 12 小时）
+    updater = main_update()
+    cache_folder = os.path.join(updater.folder, 'server', 'cache')
+    paths =os.listdir(cache_folder)
+    [os.remove(os.path.join(cache_folder, x)) for x in paths]
     pass

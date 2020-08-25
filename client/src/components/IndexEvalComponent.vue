@@ -1,5 +1,49 @@
 <template>
-  <div class="container" @click="changeShowType()">
+  <div class="container">
+    <!-- 历史大顶大底 -->
+    <div class="section-title" @click="showDistance = !showDistance">历史数据</div>
+    <!-- 标题 -->
+    <div class="sw-industry-container" v-show="showDistance" @click="showDistance = !showDistance">
+      <div class="index-cell">
+        <p class="index-name history-title-width">位置</p>
+        <p class="index-name date-width">日期</p>
+        <p class="index-name">PE</p>
+        <p class="index-name">PE 距离</p>
+        <p class="index-name">PB</p>
+        <p class="index-name">PB 距离</p>
+      </div>
+    </div>
+    <!-- 数据 -->
+    <div class="sw-industry-container" v-show="showDistance">
+      <!-- 历史大顶 -->
+      <div class="index-cell" v-for="item in swUltimates.to_tops" :key="item.index">
+        <p class="index-name top-bg-color history-title-width">顶部</p>
+        <p class="index-name top-bg-color date-width">{{item.date}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pe).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pe_distance)">{{parseFloat(item.pe_distance).toFixed(2)+'%'}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pb).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pb_distance)">{{parseFloat(item.pb_distance).toFixed(2)+'%'}}</p>
+      </div>
+      <!-- 历史大底 -->
+      <div class="index-cell" v-for="item in swUltimates.to_bottoms" :key="item.index">
+        <p class="index-name bottom-bg-color history-title-width">底部</p>
+        <p class="index-name bottom-bg-color date-width">{{item.date}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pe).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pe_distance)">{{parseFloat(item.pe_distance).toFixed(2)+'%'}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pb).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pb_distance)">{{parseFloat(item.pb_distance).toFixed(2)+'%'}}</p>
+      </div>
+      <!-- 近期以来 -->
+      <div class="index-cell" v-for="(item, i) in swUltimates.to_recents" :key="item.index">
+        <p class="index-name recent-bg-color history-title-width">{{recentTtitles[i]}}</p>
+        <p class="index-name recent-bg-color date-width">{{item.date}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pe).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pe_distance)">{{parseFloat(item.pe_distance).toFixed(2)+'%'}}</p>
+        <p class="index-name index-value-right">{{parseFloat(item.pb).toFixed(2)}}</p>
+        <p class="index-name index-value-right" :class="colorWithValue(item.pb_distance)">{{parseFloat(item.pb_distance).toFixed(2)+'%'}}</p>
+      </div>
+    </div>
+    <!-- 估值 -->
     <div class="section-title">申万行业估值</div>
     <!-- 标题 -->
     <div class="sw-industry-container">
@@ -26,7 +70,7 @@
       </div>
     </div>
     <!-- 数据 -->
-    <div class="sw-industry-container">
+    <div class="sw-industry-container" @click="changeShowType()">
       <div class="index-cell" v-for="(item, i) in swIndustryEvals" :key="item.index" >
         <p class="index-name" :class="swIndustryIndexColor(item, i)">{{item.sw1_name}}</p>
         <p class="index-name" :class="swIndustryIndexColor(item, i)">{{item.sw1_code}}</p>
@@ -41,7 +85,7 @@
         <p class="index-value" :style="evalRankBackground(parseFloat(item.pb_percentile_5y)/100)" v-else>{{parseFloat(item.pb_percentile_5y).toFixed(1)+'%'}}</p>
         <!-- 变化列 3 -->
         <p class="index-value" v-if="showType==0">{{item.pe.toFixed(2)}}</p>
-        <p class="index-value" :style="evalRankBackground(parseFloat(item.pb_percentile_10y)/100)" v-else-if="showType==1">{{parseFloat(item.pe_percentile_10y).toFixed(1)+'%'}}</p>
+        <p class="index-value" :style="evalRankBackground(parseFloat(item.pe_percentile_10y)/100)" v-else-if="showType==1">{{parseFloat(item.pe_percentile_10y).toFixed(1)+'%'}}</p>
         <p class="index-value" :style="evalRankBackground(parseFloat(item.pb_percentile_10y)/100)" v-else>{{parseFloat(item.pb_percentile_10y).toFixed(1)+'%'}}</p>
         <!-- 变化列 4 -->
         <p class="index-value" v-if="showType==0">{{item.pb.toFixed(2)}}</p>
@@ -58,6 +102,16 @@ export default {
   name: 'IndexValueComponent',
   props: ['swIndustryEvals', 'swUltimates'],
   methods: {
+    colorWithValue (value) {
+      var number = parseFloat(value)
+      if (number > 0) {
+        return 'top-bg-color'
+      } else if (number === 0) {
+        return 'normal-bg-color'
+      } else {
+        return 'bottom-bg-color'
+      }
+    },
     evalRankBackground (percentile) {
       if (percentile === 0.0) {
         return 'background-color:#333'
@@ -130,6 +184,8 @@ export default {
   data () {
     return {
       showType: 0,
+      showDistance: true,
+      recentTtitles: ['一年','半年','季度'],
       mySWIndustryEvals: this.swIndustryEvals,
       mySWUltimates: this.swUltimates,
       allMarket: {}
@@ -248,6 +304,28 @@ export default {
 .index-name-color8 {
   color:#333333;
   background-color: #F0DC5A;
+}
+
+.recent-bg-color {
+  background-color: #50C2F9;
+}
+.top-bg-color {
+  background-color: #EE2200;
+}
+.bottom-bg-color {
+  background-color: #00CC22;
+}
+
+.history-title-width {
+  width:0.8rem;
+}
+
+.date-width {
+  width:2rem;
+}
+
+.index-value-right {
+  justify-content: flex-end;
 }
 
 .index-title-center {
