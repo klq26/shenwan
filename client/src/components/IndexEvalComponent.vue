@@ -6,23 +6,23 @@
       <div class="index-cell">
         <p class="index-name">名称</p>
         <p class="index-name">代码</p>
-        <p class="index-name">股个数</p>
+        <p class="index-value index-title-center">股个数</p>
         <!-- 变化列 1 -->
-        <p class="index-name" v-if="showType==0">PE&#60;0</p>
-        <p class="index-name" v-else-if="showType==1">PE_3Y</p>
-        <p class="index-name" v-else>PB_3Y</p>
+        <p class="index-value index-title-center" v-if="showType==0">PE&#60;0</p>
+        <p class="index-value index-title-center" v-else-if="showType==1">PE_3Y</p>
+        <p class="index-value index-title-center" v-else>PB_3Y</p>
         <!-- 变化列 2 -->
-        <p class="index-name" v-if="showType==0">PE&#62;125</p>
-        <p class="index-name" v-else-if="showType==1">PE_5Y</p>
-        <p class="index-name" v-else>PB_5Y</p>
+        <p class="index-value index-title-center" v-if="showType==0">PE&#62;125</p>
+        <p class="index-value index-title-center" v-else-if="showType==1">PE_5Y</p>
+        <p class="index-value index-title-center" v-else>PB_5Y</p>
         <!-- 变化列 3 -->
-        <p class="index-name" v-if="showType==0">PE</p>
-        <p class="index-name" v-else-if="showType==1">PE_10Y</p>
-        <p class="index-name" v-else>PB_10Y</p>
+        <p class="index-value index-title-center" v-if="showType==0">PE</p>
+        <p class="index-value index-title-center" v-else-if="showType==1">PE_10Y</p>
+        <p class="index-value index-title-center" v-else>PB_10Y</p>
         <!-- 变化列 4 -->
-        <p class="index-name" v-if="showType==0">PB</p>
-        <p class="index-name" v-else-if="showType==1">PE_ALL</p>
-        <p class="index-name" v-else>PB_ALL</p>
+        <p class="index-value index-title-center" v-if="showType==0">PB</p>
+        <p class="index-value index-title-center" v-else-if="showType==1">PE_ALL</p>
+        <p class="index-value index-title-center" v-else>PB_ALL</p>
       </div>
     </div>
     <!-- 数据 -->
@@ -160,7 +160,7 @@ export default {
 
 .index-cell {
   display: flex;
-  width: 5rem;
+  width: 10rem;
   justify-content:flex-start;
   /* justify-content:flex-start; */
   align-items: center;
@@ -190,7 +190,7 @@ export default {
   align-items: center;
   margin: 1px;
   padding: 1px;
-  width: 1.5rem;
+  width: 1.7rem;
   height: 0.5rem;
   font-size: 0.33rem;
   color:#FFFFFF;
@@ -204,7 +204,7 @@ export default {
   align-items: center;
   margin: 1px;
   padding: 1px;
-  width: 1.5rem;
+  width: 1.32rem;
   height: 0.5rem;
   font-size: 0.33rem;
   /* text-align: center; */
@@ -249,4 +249,9 @@ export default {
   color:#333333;
   background-color: #F0DC5A;
 }
+
+.index-title-center {
+  justify-content: center;
+}
+
 </style>
