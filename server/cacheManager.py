@@ -11,6 +11,7 @@ class cacheManager:
 
     def __init__(self):
         super().__init__()
+        self.folder = os.path.abspath(os.path.dirname(__file__))
         self.dm = datetimeManager()
         self.cachConfig = [
             # 申万点数，缓存 30 秒
@@ -20,7 +21,7 @@ class cacheManager:
             # 指数权重，缓存 6 小时
             {'path' : '/shenwan/api/index_weight', 'cache_duration' : 6 * 60 * 60},
         ]
-        self.cache_folder = os.path.join(os.getcwd(),'cache')
+        self.cache_folder = os.path.join(self.folder, 'cache')
         if not os.path.exists(self.cache_folder):
             os.makedirs(self.cache_folder)
 

@@ -44,6 +44,8 @@ class swindex:
             # print(x.pe, x.pb)
             distance = {}
             distance['date'] = x.date
+            distance['pe'] = x.pe
+            distance['pb'] = x.pb
             distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
             distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
             ultimate_values['to_tops'].append(distance)
@@ -54,6 +56,8 @@ class swindex:
             # print(x.pe, x.pb)
             distance = {}
             distance['date'] = x.date
+            distance['pe'] = x.pe
+            distance['pb'] = x.pb
             distance['pe_distance'] = str(round((x.pe / lastest_pe - 1) * 100, 2)) + '%'
             distance['pb_distance'] = str(round((x.pb / lastest_pb - 1) * 100, 2)) + '%'
             ultimate_values['to_bottoms'].append(distance)
