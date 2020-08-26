@@ -185,7 +185,7 @@ export default {
     return {
       showType: 0,
       showDistance: true,
-      recentTtitles: ['一年','半年','季度'],
+      recentTtitles: ['一年', '半年', '季度'],
       mySWIndustryEvals: this.swIndustryEvals,
       mySWUltimates: this.swUltimates,
       allMarket: {}

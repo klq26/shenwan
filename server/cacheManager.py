@@ -20,6 +20,8 @@ class cacheManager:
             {'path' : '/shenwan/api/index_eval', 'cache_duration' : 12 * 60 * 60},
             # 指数权重，缓存 12 小时
             {'path' : '/shenwan/api/index_weight', 'cache_duration' : 12 * 60 * 60},
+            # 指数持仓，缓存 12 小时
+            {'path' : '/shenwan/api/index_holding', 'cache_duration' : 12 * 60 * 60},
         ]
         self.cache_folder = os.path.join(self.folder, 'cache')
         if not os.path.exists(self.cache_folder):

@@ -221,9 +221,22 @@ class swindex:
             # break
         return {'sw_industry':sw_indexs, 'datalist': datalist}
 
+    def get_sw_index_holding(self):
+        datalist = []
+        df = pd.read_csv(os.path.join(self.folder, 'index_holding', 'sw_holding.csv'), sep='\t')
+        # 不转换成字符串，JSON 序列化时会出错
+        df['sw1_code'] = df['sw1_code'].apply(lambda x: str(x))
+        df['holding_money'] = df['holding_money'].apply(lambda x: str(x))
+        for i in range(len(df)):
+            item = df.iloc[i]
+            # Series 可以直接转成 dict
+            datalist.append(dict(item))
+        return datalist
+
 if __name__ == "__main__":
     sw = swindex()
-    sw.get_sw_index_eval()
+    datalist = sw.get_sw_index_holding()
+    [print(x) for x in datalist]
     # sw.get_index_eval()
     #FF6666
     #FF9966

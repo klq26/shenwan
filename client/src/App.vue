@@ -10,6 +10,8 @@
     <IndexValueComponent :swIndustryValues="swIndustryValues" :swStyleValues="swStyleValues" v-show="active == 0"/>
     <!-- 估值区 -->
     <IndexEvalComponent :swIndustryEvals="swIndustryEvals" :swUltimates="swUltimates" v-show="active == 1"/>
+    <!-- 持仓区 -->
+    <IndexHoldingComponent :swIndustryHoldings="swIndustryHoldings" v-show="active == 2"/>
   </div>
 </template>
 
@@ -17,6 +19,7 @@
 
 import IndexValueComponent from './components/IndexValueComponent'
 import IndexEvalComponent from './components/IndexEvalComponent'
+import IndexHoldingComponent from './components/IndexHoldingComponent'
 
 import axios from 'axios'
 import Vue from 'vue'
@@ -31,7 +34,8 @@ export default {
   name: 'App',
   components: {
     IndexValueComponent,
-    IndexEvalComponent
+    IndexEvalComponent,
+    IndexHoldingComponent
   },
   data () {
     return {
@@ -45,12 +49,16 @@ export default {
         },
         {
           type: '申万估值'
+        },
+        {
+          type: '申万持仓'
         }
       ],
       swIndustryValues: [],
       swStyleValues: [],
       swIndustryEvals: [],
-      swUltimates: []
+      swUltimates: [],
+      swIndustryHoldings: []
     }
   },
   methods: {
@@ -93,6 +101,13 @@ export default {
         // 申万全市场历史大顶大底数据
         that.swUltimates = response.data.data.ultimate
       })
+    },
+    getSWIndexHoldings () {
+      var that = this
+      axios.get(serverIp + 'shenwan/api/index_holding').then(function (response) {
+        // 申万行业持仓数据
+        that.swIndustryHoldings = response.data.data
+      })
     }
   },
   created: function () {
@@ -108,14 +123,14 @@ export default {
         if (val > 0) {
           val -= 1
         } else {
-          val = 1
+          val = 2
         }
         that.toggle(val)
       } else if (e1 && e1.keyCode === 38) {
         // console.log('上')
       } else if (e1 && e1.keyCode === 39) {
         // console.log('右')
-        if (val < 1) {
+        if (val < 2) {
           val += 1
         } else {
           val = 0
@@ -134,6 +149,8 @@ export default {
     this.getSWIndexValues()
     // 获取指数估值
     this.getSWIndexEvals()
+    // 获取指数持仓
+    this.getSWIndexHoldings()
     // // 给首次估值一个 500 毫秒的延迟执行，防止后者先回来，没有更新页面
     // setTimeout(() => {
     //   that.familyEstimate()
@@ -157,7 +174,7 @@ ul{
 }
 
 ul li{
-  width:5rem;
+  width:3.333rem;
   height:1rem;
   background: #F0F0F0;
   display: inline-flex;
