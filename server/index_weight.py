@@ -77,6 +77,7 @@ class index_weight:
             # 4. 存入磁盘后，修改 index 为 int64，好与 df 的 Series 因为共同的 index 列而相加
             df_grouped.index = df_grouped.index.levels[0].astype('int64')
             df[x.code, x.name] += df_grouped.weight
+            idx += 1
         df = df.fillna(0.000)
         # 5. 数组整合表
         df.to_csv(os.path.join(self.folder, 'index_weights/all_index_sw_weights.csv'), sep='\t',encoding='utf-8')

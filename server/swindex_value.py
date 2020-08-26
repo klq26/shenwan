@@ -74,6 +74,13 @@ class swindex_value:
                 df.code = df.code.astype('int64')
                 dates= df['date'].apply(lambda x: x.strftime('%Y-%m-%d'))
                 df['date'] = dates
+                # 清洗数据（有 0.000000079 这样的尾巴）
+                df['open']= df['open'].apply(lambda x: round(x, 2))
+                df['high']= df['high'].apply(lambda x: round(x, 2))
+                df['low']= df['low'].apply(lambda x: round(x, 2))
+                df['close']= df['close'].apply(lambda x: round(x, 2))
+                df['volume']= df['volume'].apply(lambda x: round(x, 2))
+                df['money']= df['money'].apply(lambda x: round(x, 2))
                 results_df = pd.concat([results_df, df], ignore_index=True)
                 # results_df.to_csv(file_path,sep='\t')
                 # break
@@ -81,8 +88,7 @@ class swindex_value:
         results_df = results_df.sort_values(['date','code'])
 
         # 改名（电子元器件 => 电子，餐饮旅游 => 休闲服务）
-        values= results_df['name'].apply(lambda x: x.replace('电子元器件','电子').replace('餐饮旅游', '休闲服务'))
-        results_df['name'] = values
+        results_df['name']= results_df['name'].apply(lambda x: x.replace('电子元器件','电子').replace('餐饮旅游', '休闲服务'))
         results_df = results_df.reset_index()
         # 存入本地文件
         results_df.to_csv(file_path,sep='\t',index=0)
