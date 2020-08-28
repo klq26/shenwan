@@ -14,7 +14,7 @@ from server.configManager import configManager
 
 class swindex:
     """
-    获取和申万 28 行业有关的数据（指数走势、指数等权估值及百分位等）
+    获取和申万 28 行业有关的数据（指数走势、指数等权估值及百分位、指数权重、行业持仓金额等）
     """
     def __init__(self):
         self.folder = os.path.abspath(os.path.dirname(__file__))
@@ -31,7 +31,8 @@ class swindex:
         all_eval_df = pd.read_csv(os.path.join(self.folder, 'sw_history_daily_eval.csv'),sep='\t',index_col=0)
         #     "history": {
         #     "top_dates": ["2007-05-28", "2010-04-14", "2015-06-08"],
-        #     "bottom_dates": ["2008-11-04", "2012-12-04", "2018-11-01"]
+        #     "bottom_dates": ["2008-11-04", "2012-12-04", "2018-11-01"],
+        #     "to_recents": ["季度", "半年", "一年"]
         # }
         ultimate_values = {'to_tops': [], 'to_bottoms': [], 'to_recents': []}
         lastest_date = self.lastest_eval_df[self.lastest_eval_df.sw1_code == 801003].date.values[0]
@@ -186,12 +187,15 @@ class swindex:
 
     def __sw_index_form_data(self, tablename, key, p, where, ordeby, fieldlist, pagecount, timed=None):
         """
-        组织 www.swindex.com 网站 aspx 服务的 post 参数
+        [内部函数] 组织 www.swindex.com 网站 aspx 服务的 post 参数
         """
         values = {'tablename':tablename, 'key':key, 'p':p, 'where':where, 'orderby':ordeby, 'fieldlist':fieldlist, 'pagecount':pagecount, 'timed':time.time()}
         return values
 
     def get_index_weight(self):
+        """
+        获取部分 A 股指数申万 28 行业的权重占比
+        """
         df = pd.read_csv(os.path.join(self.folder, 'index_weights/all_index_sw_weights.csv'), sep='\t', index_col=[0,1], header=[0,1])
         # 索引
         names = df.index.levels[1]
@@ -209,7 +213,7 @@ class swindex:
         sw_indexs = [{'sequence': x, 'sw1_code': y, 'sw1_name': z} for x, y, z in zip(sw_sequences, sw_codes, sw_names)]
         # print(sw_names, type(sw_names))
         # print(sw_codes, type(sw_codes))
-        print(sw_indexs, type(sw_indexs))
+        # print(sw_indexs, type(sw_indexs))
 
         datalist = []
         for x in df.columns:
@@ -222,8 +226,11 @@ class swindex:
         return {'sw_industry':sw_indexs, 'datalist': datalist}
 
     def get_sw_index_holding(self):
+        """
+        获取申万 28 行业每一行业的具体持仓金额数据
+        """
         datalist = []
-        df = pd.read_csv(os.path.join(self.folder, 'index_holding', 'sw_holding.csv'), sep='\t')
+        df = pd.read_csv(os.path.join(self.folder, 'sw_holdings', 'sw_holding.csv'), sep='\t')
         # 不转换成字符串，JSON 序列化时会出错
         df['sw1_code'] = df['sw1_code'].apply(lambda x: str(x))
         df['holding_money'] = df['holding_money'].apply(lambda x: str(x))
@@ -235,26 +242,7 @@ class swindex:
 
 if __name__ == "__main__":
     sw = swindex()
-    datalist = sw.get_sw_index_holding()
-    [print(x) for x in datalist]
+    # [print(x) for x in sw.get_sw_index_holding()]
     # sw.get_index_eval()
-    #FF6666
-    #FF9966
-    #FFCC66
-    #FFFF66
-    #CCFF66
-    #99FF66
-    #66FF66
-    #66FF99
-    #66FFCC
-    #66FFFF
-    #66CCFF
-    #6699FF
-    #6666FF
-    #9966FF
-    #CC66FF
-    #FF66FF
-    #FF66CC
-    #FF6699
-
+    # colors = ['#FF6666', '#FF9966', '#FFCC66', '#FFFF66', '#CCFF66', '#99FF66', '#66FF66', '#66FF99', '#66FFCC', '#66FFFF', '#66CCFF', '#6699FF', '#6666FF', '#9966FF', '#CC66FF', '#FF66FF', '#FF66CC', '#FF6699']
     pass

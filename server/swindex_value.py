@@ -19,7 +19,9 @@ ac = account()
 auth(ac.joinquant_user, ac.joinquant_password)
 
 class swindex_value:
-
+    """
+    更新申万 28 行业指数的日线历史走势数据
+    """
     def __init__(self):
         print(get_query_count())
         self.folder = os.path.abspath(os.path.dirname(__file__))
@@ -29,7 +31,7 @@ class swindex_value:
 
     def update_history_daily_price(self):
         """
-        获取申万 28 行业的历史指数日线数据
+        更新申万 28 行业指数的日线历史数据
         """
         # 计算开始日期
         file_path = os.path.join(self.folder, 'sw_history_daily_price.csv')
@@ -95,6 +97,7 @@ class swindex_value:
         # print(results_df)
         # 存入阿里云服务器数据库
         swindex_db().swindex_df_to_db(results_df, 'daily_price')
+        print(get_query_count())
         pass
 
 if __name__ == "__main__":

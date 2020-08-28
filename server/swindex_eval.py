@@ -21,7 +21,7 @@ ac = account()
 auth(ac.joinquant_user, ac.joinquant_password)
 
 """
-1、新版行业分类标准设立一级行业28个、二级行业104个、三级行业227个。
+1、新版行业分类标准设立一级行业 28 个、二级行业 104 个、三级行业 227 个。
 2、一级行业调整包括:
     2.1 分拆建筑建材为建筑材料、建筑装饰;
         注释：1 变 2
@@ -38,7 +38,9 @@ auth(ac.joinquant_user, ac.joinquant_password)
 3、聚宽数据上，从 2014-02-21 开始行业数达到了 27，2014-02-24 后开始都是28行业，2014-02-20 还是 23 个行业
 """
 class swindex_eval:
-
+    """
+    更新申万 28 行业指数的日线历史估值走势数据
+    """
     def __init__(self):
         print(get_query_count())
         self.folder = os.path.abspath(os.path.dirname(__file__))
@@ -47,16 +49,13 @@ class swindex_eval:
         self.end_date = datetime.today().replace(hour=0, minute=0, second=0,microsecond=0) - timedelta(days=1)
         # 最新的股票池（online）
         self.latest_all_securities_df = self.get_all_stocks(start_date = self.end_date)
-        # 充行业分类（local）
+        # 填充行业分类（local）
         self.local_industry_database_df = pd.read_csv(os.path.join(self.folder, u'sw_industry_categorys.csv'), sep='\t',encoding=u'utf-8', index_col=0)
         pass
 
     def get_industry_for_stocks(self, df):
         """
         为股票样本池，补充申万行业分类数据
-        注意：
-        申万在2014年2月21日做了调整，2014年2月21日有几个行业一分为二，几个行业二拆成三，还有几个改了名字
-        2014年2月21日之后的行业是28个，之前是23个，历史上总共有34个。
         """
         # return pd.read_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t', index_col=0)
         results = get_industry(security = list(df.index))
@@ -187,7 +186,7 @@ class swindex_eval:
 
     def update_history_daily_eval(self):
         """
-        更新申万 28 行业及全市场整体的等权数据
+        更新申万 28 行业及全市场整体的日线等权历史数据
         """
         ###
         # 1. 先看是否需要更新本地申万行业分类表
@@ -255,6 +254,8 @@ class swindex_eval:
         latest_eval_df = latest_eval_df.reset_index(drop=True)
         latest_eval_df.to_csv(os.path.join(self.folder, 'sw_latest_eval.csv'),sep='\t')
         # print(latest_eval_df)
+        print(get_query_count())
+        pass
 
 if __name__ == "__main__":
     sw_eval = swindex_eval()

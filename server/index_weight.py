@@ -17,13 +17,19 @@ ac = account()
 auth(ac.joinquant_user, ac.joinquant_password)
 
 class index_weight:
-
+    """
+    更新指数的持仓权重数据
+    """
     def __init__(self):
+        print(get_query_count())
         self.folder = os.path.abspath(os.path.dirname(__file__))
         self.future_industry_df = pd.read_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t', index_col=0)
         pass
 
     def get_index_stock_industry(self, name, df):
+        """
+        给股票池补充申万一级行业数据
+        """
         future_df = self.future_industry_df
         unknow_df = df[~(df.index.isin(future_df.index))]
         if len(unknow_df) > 0:
@@ -39,6 +45,9 @@ class index_weight:
         return df
 
     def update_index_weights(self):
+        """
+        更新指数的持仓权重数据，生成汇总表和每只指数的分表
+        """
         idx = 1
         # columns
         df_index = pd.read_csv(os.path.join(self.folder, 'index_weight_list.csv'),sep='\t',index_col=0)
@@ -81,6 +90,7 @@ class index_weight:
         df = df.fillna(0.000)
         # 5. 数组整合表
         df.to_csv(os.path.join(self.folder, 'index_weights/all_index_sw_weights.csv'), sep='\t',encoding='utf-8')
+        print(get_query_count())
         return df
 
 if __name__ == "__main__":
