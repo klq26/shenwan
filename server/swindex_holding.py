@@ -86,76 +86,83 @@ class swindex_holding:
         用申万 28 行业表示，第三方投资组合中可得知的股票比例部分。
         """
         print('获取第三方组合行业持仓数据..')
+        # 投资组合（稳稳的幸福只做分析之用）
+        plans = [{'name' : 'wenwen', 'code': 'CSI1014', 'real': False}, {'name' : '365', 'code': 'CSI1019', 'real': True}]
+
         req_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"}
         holding_money = round(self.cm.config['plan_holding']['klq'] + self.cm.config['plan_holding']['parents'], 2) # 1226276.81
         
-        # 1. 读取计划中的持仓数据
-        plan_funds = []
-        response = requests.get('https://danjuanapp.com/djapi/plan/position/detail?plan_code=CSI1019', headers=req_header)
-        if response and response.status_code == 200:
-            fundlist = response.json()['data']['items']
-            for x in fundlist:
-                # 只要持仓大于 0 的基金
-                if x['percent'] > 0:
-                    plan_funds.append(pd.Series(x))
-        else:
-            print(response.status_code)
-            exit(1)
-        df = pd.DataFrame(plan_funds)
-        df = df.drop(['type_desc','type', 'total_gain_rate'], axis=1)
-        df['holding_money'] = round(df.percent / 100 * holding_money, 2)
-        # print(df)
-
-        # 2. 每只基金的股票持仓
-        detail_holder = u'https://danjuanapp.com/djapi/fund/detail/'
-        df_stock_list = []
-        for x in df.itertuples():
-            # print(x)
-            response = requests.get(detail_holder + x[1], headers = req_header)
+        for plan in plans:
+            # 1. 读取计划中的持仓数据
+            plan_funds = []
+            response = requests.get('https://danjuanapp.com/djapi/plan/position/detail?plan_code={0}'.format(plan['code']), headers=req_header)
             if response and response.status_code == 200:
-                stock_list = response.json()['data']['fund_position']['stock_list']
-                # bond_list = response.json()['data']['fund_position']['bond_list']
-                df_stocks = pd.DataFrame(stock_list)
-                # 去掉港股（港股的 percent 是 NaN）
-                df_stocks = df_stocks.dropna()
-                df_stocks['fund_code'] = x[1]
-                df_stocks['fund_name'] = x[2]
-                df_stocks['fund_percent'] = x[3]
-                df_stocks['fund_holding'] = x[4]
-                df_stocks = df_stocks.rename(columns={'code': 'stock_code','name':'stock_name','percent':'stock_percent'})
-                df_stocks['stock_holding'] = round(df_stocks['fund_holding'] * df_stocks['stock_percent'] / 100, 2)
-                df_stocks = df_stocks.drop(['amarket', 'change_percentage', 'current_price', 'xq_symbol', 'xq_url'], axis=1)
-                df_stocks = df_stocks[['fund_code','fund_name', 'fund_percent', 'fund_holding', 'stock_code','stock_name','stock_percent','stock_holding']]
-                # 去掉持仓市值为 0 的持仓
-                df_stocks = df_stocks[df_stocks['stock_holding'] > 1]
-                df_stock_list.append(df_stocks)
-        df_plan_holding = pd.concat(df_stock_list, ignore_index=True)
-        # 保存最完整的计划数据
-        # fund_code  fund_name  fund_percent  fund_holding stock_code stock_name  stock_percent  stock_holding
-        # 0     007749  民生加银鹏程混合C         20.54     251877.26     002475       立讯精密           0.96        2418.02
-        df_plan_holding.to_csv(os.path.join(self.folder, 'sw_holdings', 'plan365_holding.csv'), sep='\t')
+                fundlist = response.json()['data']['items']
+                for x in fundlist:
+                    # 只要持仓大于 0 的基金
+                    if x['percent'] > 0:
+                        plan_funds.append(pd.Series(x))
+            else:
+                print(response.status_code)
+                exit(1)
+            df = pd.DataFrame(plan_funds)
+            df = df.drop(['type_desc','type', 'total_gain_rate'], axis=1)
+            df['holding_money'] = round(df.percent / 100 * holding_money, 2)
+            # print(df)
+            # break
+            # 2. 每只基金的股票持仓
+            detail_holder = u'https://danjuanapp.com/djapi/fund/detail/'
+            df_stock_list = []
+            for x in df.itertuples():
+                # print(x)
+                response = requests.get(detail_holder + x[1], headers = req_header)
+                if response and response.status_code == 200:
+                    stock_list = response.json()['data']['fund_position']['stock_list']
+                    # bond_list = response.json()['data']['fund_position']['bond_list']
+                    if len(stock_list) > 0:
+                        df_stocks = pd.DataFrame(stock_list)
+                        # 去掉港股（港股的 percent 是 NaN）
+                        df_stocks = df_stocks.dropna()
+                        df_stocks['fund_code'] = x[1]
+                        df_stocks['fund_name'] = x[2]
+                        df_stocks['fund_percent'] = x[3]
+                        df_stocks['fund_holding'] = x[4]
+                        df_stocks = df_stocks.rename(columns={'code': 'stock_code','name':'stock_name','percent':'stock_percent'})
+                        df_stocks['stock_holding'] = round(df_stocks['fund_holding'] * df_stocks['stock_percent'] / 100, 2)
+                        df_stocks = df_stocks.drop(['amarket', 'change_percentage', 'current_price', 'xq_symbol', 'xq_url'], axis=1)
+                        df_stocks = df_stocks[['fund_code','fund_name', 'fund_percent', 'fund_holding', 'stock_code','stock_name','stock_percent','stock_holding']]
+                        # 去掉持仓市值为 0 的持仓
+                        df_stocks = df_stocks[df_stocks['stock_holding'] > 1]
+                        df_stock_list.append(df_stocks)
+            df_plan_holding = pd.concat(df_stock_list, ignore_index=True)
+            # 保存最完整的计划数据
+            # fund_code  fund_name  fund_percent  fund_holding stock_code stock_name  stock_percent  stock_holding
+            # 0     007749  民生加银鹏程混合C         20.54     251877.26     002475       立讯精密           0.96        2418.02
+            df_plan_holding.to_csv(os.path.join(self.folder, 'sw_holdings', 'plan_{0}_holding.csv'.format(plan['name'])), sep='\t')
 
-        # 3. 按股票名整合
-        df_groupby = df_plan_holding.groupby(['stock_code','stock_name']).sum()
-        df_groupby = df_groupby.drop(['fund_percent','fund_holding','stock_percent'], axis=1)
+            # 3. 按股票名整合
+            df_groupby = df_plan_holding.groupby(['stock_code','stock_name']).sum()
+            df_groupby = df_groupby.drop(['fund_percent','fund_holding','stock_percent'], axis=1)
 
-        # 4. 增加行业情况
-        df_sw = pd.read_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t', index_col = 0)
-        df_with_industry = pd.merge(left=df_groupby, right=df_sw, how='left',left_on='stock_name', right_on='display_name')
-        df_with_industry = df_with_industry[['sw1_code', 'sw1_name', 'display_name', 'stock_holding']]
-        df_with_industry['sw1_name'] = df_with_industry.sw1_name.apply(lambda x: x.replace('I',''))
+            # 4. 增加行业情况
+            df_sw = pd.read_csv(os.path.join(self.folder, 'sw_industry_categorys.csv'), sep='\t', index_col = 0)
+            df_with_industry = pd.merge(left=df_groupby, right=df_sw, how='left',left_on='stock_name', right_on='display_name')
+            df_with_industry = df_with_industry[['sw1_code', 'sw1_name', 'display_name', 'stock_holding']]
+            df_with_industry['sw1_name'] = df_with_industry.sw1_name.apply(lambda x: x.replace('I',''))
 
-        # 按申万 28 行业来算
-        df_industry_groupby = df_with_industry.groupby(['sw1_code','sw1_name']).sum()
-        total_holding = df_industry_groupby.stock_holding.sum()
-        df_industry_groupby = df_industry_groupby.rename(columns={'stock_holding': 'holding_money'})
-        df_industry_groupby['holding_money'] = df_industry_groupby.holding_money.apply(lambda x: round(x, 2))
-        df_industry_groupby['rate'] = round(df_industry_groupby.holding_money / total_holding * 100, 2)
-        df_industry_groupby['rate'] = df_industry_groupby.rate.apply(lambda x: str(x) + '%')
-        df_industry_groupby.to_csv(os.path.join(self.folder, 'sw_holdings', 'sw_plan_holding.csv'), sep='\t')
-        # sw1_code	sw1_name	holding_money	rate
-        # 801010	农林牧渔	12380.52	1.91%
-        return df_industry_groupby
+            # 按申万 28 行业来算
+            df_industry_groupby = df_with_industry.groupby(['sw1_code','sw1_name']).sum()
+            total_holding = df_industry_groupby.stock_holding.sum()
+            df_industry_groupby = df_industry_groupby.rename(columns={'stock_holding': 'holding_money'})
+            df_industry_groupby['holding_money'] = df_industry_groupby.holding_money.apply(lambda x: round(x, 2))
+            df_industry_groupby['rate'] = round(df_industry_groupby.holding_money / total_holding * 100, 2)
+            df_industry_groupby['rate'] = df_industry_groupby.rate.apply(lambda x: str(x) + '%')
+            df_industry_groupby.to_csv(os.path.join(self.folder, 'sw_holdings', 'sw_plan_{0}_holding.csv'.format(plan['name'])), sep='\t')
+            # sw1_code	sw1_name	holding_money	rate
+            # 801010	农林牧渔	12380.52	1.91%
+            if plan['real'] == True:
+                return df_industry_groupby
+        return None
 
     def update_sw_index_holding(self):
         # 指数基金部分的股票持仓
